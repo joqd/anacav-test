@@ -1,0 +1,18 @@
+item,value
+dl_source_host,172.30.10.150
+dl_source_database,DL
+customer_source_host,172.30.10.159
+customer_source_database,ELEC
+bill_condition,DL.Bil_Tb_Bill.xBillStartDate > '1405/01/01'
+faham_count,50
+non_faham_count,150
+note,"This corrected package uses the live DL source table Bil_Tb_Bill, not the stale PostgreSQL ETL copy."
+note,MeterInfo is included for complete bounded window TimeTag >= 14050201000000 and TimeTag < 14050202000000.
+
+file,row_count
+selected_subscribers.csv,200
+faham_customer_full.csv,50
+non_faham_customer_full.csv,150
+faham_meter.csv,50
+faham_meterinfo_1405_to_present.csv,4613
+bill_tb_bill_1405_to_present.csv,479
