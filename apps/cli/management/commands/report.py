@@ -7,7 +7,11 @@ from django.core.management.base import BaseCommand, CommandError
 from apps.billing.models import Bill
 from apps.customers.models import Customer
 
-TARGET_CYCLES = ['140503', '140504']
+# Khordad + Tir 1405. end_date_jalali is stored as 'YYYY/MM/DD' (zero-padded),
+# so plain string comparison is equivalent to date comparison.
+JALALI_START = '1405/03/01'          # inclusive: first day of Khordad
+JALALI_END_EXCLUSIVE = '1405/05/01'  # exclusive: first day of Mordad
+
 NO_VALUE_LABEL = 'No value / NULL'
 DEFAULT_OUTPUT_DIR = 'reports/khordad_tir_1405'
 
@@ -17,8 +21,8 @@ CSV_ENCODING = 'utf-8-sig'
 
 class Command(BaseCommand):
     help = (
-        'Prints customers with a bill in Khordad/Tir 1405, broken down by several '
-        'attributes, and exports each request to its own CSV file.'
+        'Prints customers with a bill ending in Khordad/Tir 1405 (by end_date_jalali), '
+        'broken down by several attributes, and exports each request to its own CSV file.'
     )
 
     def add_arguments(self, parser):
@@ -44,13 +48,15 @@ class Command(BaseCommand):
         except OSError as exc:
             raise CommandError(f'Cannot create output directory {self.output_dir}: {exc}')
 
-        bills_qs = Bill.objects.filter(cycle__in=TARGET_CYCLES).values(
+        bills_qs = Bill.objects.filter(
+            end_date_jalali__gte=JALALI_START,
+            end_date_jalali__lt=JALALI_END_EXCLUSIVE,
+        ).values(
             'customer_id',
             'bill_type_name',
             'change_reason_id',
             'change_reason_name',
         )
-        self._print_sql('Bills in Khordad/Tir 1405', bills_qs)
         bill_rows = list(bills_qs)
 
         if not bill_rows:
@@ -60,7 +66,6 @@ class Command(BaseCommand):
         customer_ids = sorted({row['customer_id'] for row in bill_rows})
 
         customers_qs = Customer.objects.filter(bill_identity__in=customer_ids)
-        self._print_sql('Customers referenced by those bills', customers_qs)
         customers = {c.bill_identity: c for c in customers_qs}
 
         self._print_customer_list(customer_ids)
@@ -71,6 +76,7 @@ class Command(BaseCommand):
             bill_rows,
             lambda row: row['bill_type_name'] or NO_VALUE_LABEL,
             show_customers,
+            sql=self._sql_bill_level(f"COALESCE(NULLIF(b.bill_type_name, ''), '{NO_VALUE_LABEL}')"),
         )
 
         self._print_customer_level_breakdown(
@@ -79,6 +85,7 @@ class Command(BaseCommand):
             customers,
             lambda c: c.subscriber_type or NO_VALUE_LABEL,
             show_customers,
+            sql=self._sql_customer_level(f"COALESCE(NULLIF(c.subscriber_type, ''), '{NO_VALUE_LABEL}')"),
         )
 
         self._print_customer_level_breakdown(
@@ -87,6 +94,7 @@ class Command(BaseCommand):
             customers,
             lambda c: c.usage_group_name or NO_VALUE_LABEL,
             show_customers,
+            sql=self._sql_customer_level(f"COALESCE(NULLIF(c.usage_group_name, ''), '{NO_VALUE_LABEL}')"),
         )
 
         self._print_customer_level_breakdown(
@@ -95,6 +103,7 @@ class Command(BaseCommand):
             customers,
             lambda c: c.omor_name or NO_VALUE_LABEL,
             show_customers,
+            sql=self._sql_customer_level(f"COALESCE(NULLIF(c.omor_name, ''), '{NO_VALUE_LABEL}')"),
         )
 
         self._print_bill_level_breakdown(
@@ -107,16 +116,80 @@ class Command(BaseCommand):
                 else NO_VALUE_LABEL
             ),
             show_customers,
+            sql=self._sql_bill_level(
+                "CASE WHEN b.change_reason_id IS NOT NULL "
+                "THEN CONCAT(b.change_reason_id, ' - ', b.change_reason_name) "
+                f"ELSE '{NO_VALUE_LABEL}' END"
+            ),
         )
 
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS(f'CSV files written to: {self.output_dir.resolve()}'))
 
     # ------------------------------------------------------------------ #
+    # Sample raw PostgreSQL (printed above each request's result)
+    # Column names are assumed to match the model field names.
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def _bill_table():
+        return Bill._meta.db_table
+
+    @staticmethod
+    def _customer_table():
+        return Customer._meta.db_table
+
+    def _base_where(self, alias='b'):
+        return (
+            f"{alias}.end_date_jalali >= '{JALALI_START}' "
+            f"AND {alias}.end_date_jalali < '{JALALI_END_EXCLUSIVE}'"
+        )
+
+    def _sql_customer_list(self):
+        return (
+            f'SELECT DISTINCT b.customer_id AS bill_identity\n'
+            f'FROM {self._bill_table()} b\n'
+            f'WHERE {self._base_where()}\n'
+            f'ORDER BY b.customer_id;'
+        )
+
+    def _sql_bill_level(self, group_expr):
+        return (
+            f'SELECT {group_expr} AS "group",\n'
+            f'       COUNT(DISTINCT b.customer_id) AS customer_count\n'
+            f'FROM {self._bill_table()} b\n'
+            f'WHERE {self._base_where()}\n'
+            f'GROUP BY 1\n'
+            f'ORDER BY customer_count DESC, "group";'
+        )
+
+    def _sql_customer_level(self, group_expr):
+        return (
+            f'SELECT {group_expr} AS "group",\n'
+            f'       COUNT(*) AS customer_count\n'
+            f'FROM {self._customer_table()} c\n'
+            f'WHERE c.bill_identity IN (\n'
+            f'    SELECT DISTINCT b.customer_id\n'
+            f'    FROM {self._bill_table()} b\n'
+            f'    WHERE {self._base_where()}\n'
+            f')\n'
+            f'GROUP BY 1\n'
+            f'ORDER BY customer_count DESC, "group";'
+        )
+
+    def _print_sql(self, sql):
+        self.stdout.write('-- Sample PostgreSQL:')
+        self.stdout.write(sql)
+        self.stdout.write('')
+
+    # ------------------------------------------------------------------ #
     # Request 1
     # ------------------------------------------------------------------ #
     def _print_customer_list(self, customer_ids):
-        self._section_header(f'Request 1: customers with a bill in Khordad/Tir 1405 (cycle in {TARGET_CYCLES})')
+        self._section_header(
+            f'Request 1: customers with a bill ending in Khordad/Tir 1405 '
+            f'(end_date_jalali in [{JALALI_START}, {JALALI_END_EXCLUSIVE}))'
+        )
+        self._print_sql(self._sql_customer_list())
         for bill_identity in customer_ids:
             self.stdout.write(str(bill_identity))
         self.stdout.write(self.style.SUCCESS(f'Total: {len(customer_ids)} customers'))
@@ -131,19 +204,20 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ #
     # Breakdowns
     # ------------------------------------------------------------------ #
-    def _print_customer_level_breakdown(self, title, stem, customers, key_fn, show_customers):
+    def _print_customer_level_breakdown(self, title, stem, customers, key_fn, show_customers, sql):
         # One customer -> exactly one group, so groups are disjoint.
         groups = defaultdict(set)
         for bill_identity, customer in customers.items():
             groups[key_fn(customer)].add(bill_identity)
 
         self._section_header(title)
+        self._print_sql(sql)
         self._write_groups(groups, len(customers), overlap_possible=False)
         if show_customers:
             self._write_group_members(groups)
         self._export_breakdown(stem, groups, show_customers)
 
-    def _print_bill_level_breakdown(self, title, stem, bill_rows, key_fn, show_customers):
+    def _print_bill_level_breakdown(self, title, stem, bill_rows, key_fn, show_customers, sql):
         groups = defaultdict(set)
         for row in bill_rows:
             groups[key_fn(row)].add(row['customer_id'])
@@ -151,6 +225,7 @@ class Command(BaseCommand):
         total_customers = len({row['customer_id'] for row in bill_rows})
 
         self._section_header(title)
+        self._print_sql(sql)
         self._write_groups(groups, total_customers, overlap_possible=True)
         if show_customers:
             self._write_group_members(groups)
@@ -182,11 +257,6 @@ class Command(BaseCommand):
         self.stdout.write('=' * 70)
         self.stdout.write(title)
         self.stdout.write('=' * 70)
-
-    def _print_sql(self, label, queryset):
-        self.stdout.write('')
-        self.stdout.write(f'-- SQL for: {label}')
-        self.stdout.write(str(queryset.query))
 
     # ------------------------------------------------------------------ #
     # CSV export
