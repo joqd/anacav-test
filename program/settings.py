@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+from django.urls import reverse_lazy
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -146,3 +148,107 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+UNFOLD = {
+    'SITE_TITLE': 'Anacav Admin',
+    'SITE_HEADER': 'Anacav',
+    'SITE_SYMBOL': 'bolt',
+    'SHOW_HISTORY': True,
+    'SHOW_VIEW_ON_SITE': True,
+    'SIDEBAR': {
+        'show_search': True,
+        'show_all_applications': False,
+        'navigation': [
+            {
+                'title': 'Customers',
+                'icon': 'people',
+                'items': [
+                    {
+                        'title': 'Customers',
+                        'icon': 'person',
+                        'link': reverse_lazy('admin:customers_customer_changelist'),
+                    },
+                    {
+                        'title': 'Change Logs',
+                        'icon': 'history',
+                        'link': reverse_lazy('admin:customers_customerchangelog_changelist'),
+                    },
+                ],
+            },
+            {
+                'title': 'Billing',
+                'icon': 'receipt_long',
+                'items': [
+                    {
+                        'title': 'Bills',
+                        'icon': 'receipt',
+                        'link': reverse_lazy('admin:billing_bill_changelist'),
+                    },
+                    {
+                        'title': 'Bill Observations',
+                        'icon': 'visibility',
+                        'link': reverse_lazy('admin:billing_billobservation_changelist'),
+                    },
+                    {
+                        'title': 'Monthly Estimates',
+                        'icon': 'calendar_month',
+                        'link': reverse_lazy('admin:billing_monthlyconsumptionestimate_changelist'),
+                    },
+                ],
+            },
+            {
+                'title': 'Metering',
+                'icon': 'electric_meter',
+                'items': [
+                    {
+                        'title': 'Metering Stations',
+                        'icon': 'domain',
+                        'link': reverse_lazy('admin:metering_meteringstation_changelist'),
+                    },
+                    {
+                        'title': 'Measurement Tools',
+                        'icon': 'speed',
+                        'link': reverse_lazy('admin:metering_measurementtool_changelist'),
+                    },
+                    {
+                        'title': 'Feeder Links',
+                        'icon': 'account_tree',
+                        'link': reverse_lazy('admin:metering_feedercustomerlink_changelist'),
+                    },
+                    {
+                        'title': 'Power Daily Stats',
+                        'icon': 'monitoring',
+                        'link': reverse_lazy('admin:metering_toolpowerdailystat_changelist'),
+                    },
+                    {
+                        'title': 'Quarterly Energy',
+                        'icon': 'bar_chart',
+                        'link': reverse_lazy('admin:metering_meterquarterlyenergy_changelist'),
+                    },
+                    {
+                        'title': 'Smart Meter Readings',
+                        'icon': 'query_stats',
+                        'link': reverse_lazy('admin:metering_smartmeterreading_changelist'),
+                    },
+                ],
+            },
+            {
+                'title': 'System',
+                'icon': 'settings',
+                'items': [
+                    {
+                        'title': 'Users',
+                        'icon': 'people',
+                        'link': reverse_lazy('admin:auth_user_changelist'),
+                    },
+                    {
+                        'title': 'Groups',
+                        'icon': 'group',
+                        'link': reverse_lazy('admin:auth_group_changelist'),
+                    },
+                ],
+            },
+        ],
+    },
+}
