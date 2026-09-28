@@ -57,6 +57,7 @@ class MeasurementToolAdmin(ModelAdmin):
         'pgds_code',
         'station',
         'customer',
+        'subscription_id',
         'active_status',
         'multiplier',
     )
@@ -67,6 +68,10 @@ class MeasurementToolAdmin(ModelAdmin):
         'station',
         'branch_state_name',
         'zone_name',
+        'category',
+        'sub_category',
+        'state',
+        'is_building',
     )
     search_fields = (
         'meter_id',
@@ -75,7 +80,11 @@ class MeasurementToolAdmin(ModelAdmin):
         'tool_id',
         'tool_name',
         'customer__bill_identity',
+        'subscription_id',
+        'faham_unit_id',
         'mv_feeder_id',
+        'identity_number',
+        'customer_zone_name',
     )
     list_select_related = ('station', 'customer')
     list_per_page = 50
@@ -100,13 +109,21 @@ class MeasurementToolAdmin(ModelAdmin):
                     'tool_id',
                     'tool_name',
                     'tool_type_id',
-                ),
+                    'identity_number',
+                )
             },
         ),
         (
             'Relationships',
             {
-                'fields': ('station', 'customer'),
+                'fields': (
+                    'station',
+                    'customer',
+                    'subscription_id',
+                    'faham_unit_id',
+                    'unit_id',
+                    'billing_unit_id',
+                )
             },
         ),
         (
@@ -117,29 +134,61 @@ class MeasurementToolAdmin(ModelAdmin):
                     'formula_type_id',
                     'formula_mount_date',
                     'formula_dismount_date',
-                ),
+                )
             },
         ),
         (
             'Electrical Configuration',
             {
-                'fields': ('ct_ratio', 'pt_ratio'),
+                'fields': (
+                    'ct_ratio',
+                    'pt_ratio',
+                    'contract_power',
+                    'voltage_str',
+                    'usage_type_id',
+                )
             },
         ),
         (
-            'Location and Contract',
+            'Feeder and Location',
             {
                 'fields': (
                     'mv_feeder_id',
-                    'contract_power',
                     'branch_state_code',
                     'branch_state_name',
                     'zone_name',
+                    'zone_id',
                     'department_name',
-                    'remote_control_type',
-                    'usage_type_id',
-                ),
+                    'department_code',
+                    'x_position',
+                    'y_position',
+                )
             },
+        ),
+        (
+            'Usage Classification',
+            {
+                'fields': (
+                    'category',
+                    'sub_category',
+                    'usage_group_code',
+                    'usage_group_name',
+                    'is_building',
+                )
+            },
+        ),
+        (
+            'Customer Zone',
+            {
+                'fields': (
+                    'customer_zone_id',
+                    'customer_zone_name',
+                )
+            },
+        ),
+        (
+            'Control',
+            {'fields': ('remote_control_type',)},
         ),
     )
 
@@ -154,7 +203,11 @@ class FeederCustomerLinkAdmin(ModelAdmin):
         'valid_to',
         'is_deleted',
     )
-    list_filter = ('is_deleted', 'last_update', 'valid_to')
+    list_filter = (
+        'is_deleted',
+        'last_update',
+        'valid_to',
+    )
     search_fields = (
         'customer__bill_identity',
         'tool__meter_id',
@@ -179,7 +232,10 @@ class ToolPowerDailyStatAdmin(ModelAdmin):
         'formula_type_count',
     )
     list_filter = ('sample_date',)
-    search_fields = ('tool__meter_id', 'tool__serial_number')
+    search_fields = (
+        'tool__meter_id',
+        'tool__serial_number',
+    )
     list_select_related = ('tool',)
     list_per_page = 50
     date_hierarchy = 'sample_date'
@@ -199,7 +255,10 @@ class MeterQuarterlyEnergyAdmin(ModelAdmin):
         'status_nonnull_count',
     )
     list_filter = ('sample_date',)
-    search_fields = ('tool__meter_id', 'tool__serial_number')
+    search_fields = (
+        'tool__meter_id',
+        'tool__serial_number',
+    )
     list_select_related = ('tool',)
     list_per_page = 50
     date_hierarchy = 'sample_date'
@@ -215,15 +274,114 @@ class SmartMeterReadingAdmin(ModelAdmin):
         'power_reactive',
         'power_factor',
         'demand',
+        'frequency',
         'active_energy',
     )
-    list_filter = ('reading_time',)
+    list_filter = (
+        'reading_time',
+        'profile_status_energy',
+        'profile_status_power',
+        'source_name',
+    )
     search_fields = (
         'tool__meter_id',
         'tool__serial_number',
         'meter_serial_number',
         'shamsi_date',
+        'guid',
+        'source_id',
+        'source_name',
     )
     list_select_related = ('tool',)
     list_per_page = 100
     date_hierarchy = 'reading_time'
+
+    fieldsets = (
+        (
+            'Reading Information',
+            {
+                'fields': (
+                    'tool',
+                    'time_tag',
+                    'reading_time',
+                    'shamsi_date',
+                    'meter_serial_number',
+                )
+            },
+        ),
+        (
+            'Power',
+            {
+                'fields': (
+                    'power_active',
+                    'power_reactive',
+                    'power_factor',
+                    'demand',
+                    'frequency',
+                )
+            },
+        ),
+        (
+            'Energy',
+            {
+                'fields': (
+                    'active_energy',
+                    'reactive_energy',
+                    'active_energy_export',
+                    'reactive_energy_export',
+                )
+            },
+        ),
+        (
+            'Voltage',
+            {
+                'fields': (
+                    'voltage_phase_a',
+                    'voltage_phase_b',
+                    'voltage_phase_c',
+                    'voltage_phase_n',
+                    'voltage_l1',
+                    'voltage_l2',
+                    'voltage_l3',
+                )
+            },
+        ),
+        (
+            'Current',
+            {
+                'fields': (
+                    'current_phase_a',
+                    'current_phase_b',
+                    'current_phase_c',
+                    'current_phase_n',
+                    'current_l1',
+                    'current_l2',
+                    'current_l3',
+                )
+            },
+        ),
+        (
+            'Phase Angles',
+            {
+                'fields': (
+                    'phase_a_angle',
+                    'phase_b_angle',
+                    'phase_c_angle',
+                    'phase_n_angle',
+                )
+            },
+        ),
+        (
+            'Source',
+            {
+                'fields': (
+                    'guid',
+                    'source_id',
+                    'source_name',
+                    'profile_status_energy',
+                    'profile_status_power',
+                    'dl_insert_time',
+                )
+            },
+        ),
+    )

@@ -259,6 +259,7 @@ class Command(BaseCommand):
 
     def import_meters(self, path):
         self.stdout.write(f'Importing measurement tools from {path}')
+        known_identities = set(Customer.objects.values_list('bill_identity', flat=True))
         sub_to_identity = dict(
             Customer.objects.exclude(subscription_id__isnull=True).values_list('subscription_id', 'bill_identity')
         )
@@ -273,24 +274,47 @@ class Command(BaseCommand):
                         skipped += 1
                         continue
 
-                    bill_identity = sub_to_identity.get(to_int(row['SubscriptionId']))
+                    subscription_id = to_int(row['SubscriptionId'])
+                    bill_identity = to_int(row['SubscriptionBillId'])
+                    if bill_identity not in known_identities:
+                        bill_identity = sub_to_identity.get(subscription_id)
+
+                    state = blank_to_none(row['State'])
 
                     defaults = dict(
                         serial_number=blank_to_none(row['MeterName']) or '',
                         tool_name=blank_to_none(row['MeterName']) or '',
                         tool_type_id=to_int(row['MeterType']),
                         customer_id=bill_identity,
-                        active_status=blank_to_none(row['State']) == 'فعال',
+                        subscription_id=subscription_id,
+                        active_status=state == 'Operating',
+                        state=state,
+                        category=blank_to_none(row['Category']),
+                        sub_category=blank_to_none(row['SubCategory']),
                         ct_ratio=to_int(row['CT']) or 1,
                         pt_ratio=to_int(row['PT']) or 1,
+                        x_position=to_float(row['XPosition']),
+                        y_position=to_float(row['YPosition']),
+                        faham_unit_id=blank_to_none(row['FahamUnitId']),
+                        unit_id=to_int(row['UnitId']),
+                        billing_unit_id=to_int(row['BillingUnitId']),
                         mv_feeder_id=blank_to_none(row['MVFeederID']),
                         contract_power=to_float(row['ContractPower']),
+                        usage_group_code=to_int(row['UsageGroupCode']),
+                        usage_group_name=blank_to_none(row['UsageGroupName']),
+                        usage_type_id=blank_to_none(row['UsageTypeId']),
                         branch_state_code=blank_to_none(row['BranchStateCode']),
                         branch_state_name=blank_to_none(row['BranchStateName']),
+                        zone_id=blank_to_none(row['ZoneID']),
                         zone_name=blank_to_none(row['ZoneName']),
+                        customer_zone_id=blank_to_none(row['CustomerZoneID']),
+                        customer_zone_name=blank_to_none(row['CustomerZoneName']),
+                        department_code=blank_to_none(row['DepartmentCode']),
                         department_name=blank_to_none(row['DepartmentName']),
                         remote_control_type=blank_to_none(row['RemoteControlType']),
-                        usage_type_id=blank_to_none(row['UsageTypeId']),
+                        is_building=to_bool_tf(row['IsBuilding']),
+                        voltage_str=blank_to_none(row['VoltageStr']),
+                        identity_number=blank_to_none(row['IdentityNumber']),
                     )
 
                     _, was_created = MeasurementTool.objects.update_or_create(meter_id=meter_id, defaults=defaults)
@@ -316,7 +340,7 @@ class Command(BaseCommand):
                     if limit and i > limit:
                         break
 
-                    meter_id = to_int(row['MeterID'])
+                    meter_id = to_int(row['ID']) or to_int(row['MeterID'])
                     tool_pk = tool_cache.get(meter_id)
                     time_tag = to_int(row['TimeTag'])
                     reading_time = parse_dt(row['Date'])
@@ -346,6 +370,22 @@ class Command(BaseCommand):
                         current_phase_b=to_float(row['CurrentPhaseB']),
                         current_phase_c=to_float(row['CurrentPhaseC']),
                         current_phase_n=to_float(row['CurrentPhaseN']),
+                        phase_a_angle=to_float(row['PhaseAAngle']),
+                        phase_b_angle=to_float(row['PhaseBAngle']),
+                        phase_c_angle=to_float(row['PhaseCAngle']),
+                        phase_n_angle=to_float(row['PhaseNAngle']),
+                        voltage_l1=to_float(row['VoltageL1']),
+                        voltage_l2=to_float(row['VoltageL2']),
+                        voltage_l3=to_float(row['VoltageL3']),
+                        current_l1=to_float(row['CurrentL1']),
+                        current_l2=to_float(row['CurrentL2']),
+                        current_l3=to_float(row['CurrentL3']),
+                        guid=blank_to_none(row['GUID']),
+                        source_id=blank_to_none(row['SourceID']),
+                        source_name=blank_to_none(row['SourceName']),
+                        profile_status_energy=to_int(row['ProfileStatusEnergy']),
+                        profile_status_power=to_int(row['ProfileStatusPower']),
+                        dl_insert_time=parse_dt(row['dlInsertTime']),
                     )
 
                     _, was_created = SmartMeterReading.objects.update_or_create(

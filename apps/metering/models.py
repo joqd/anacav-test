@@ -48,6 +48,25 @@ class MeasurementTool(models.Model):
     remote_control_type = models.CharField(max_length=100, null=True, blank=True)
     usage_type_id = models.CharField(max_length=20, null=True, blank=True)
 
+    subscription_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    faham_unit_id = models.CharField(max_length=50, null=True, blank=True)
+    unit_id = models.PositiveIntegerField(null=True, blank=True)
+    billing_unit_id = models.PositiveIntegerField(null=True, blank=True)
+    x_position = models.FloatField(null=True, blank=True)
+    y_position = models.FloatField(null=True, blank=True)
+    category = models.CharField(max_length=50, null=True, blank=True)
+    sub_category = models.CharField(max_length=50, null=True, blank=True)
+    state = models.CharField(max_length=50, null=True, blank=True)
+    department_code = models.CharField(max_length=20, null=True, blank=True)
+    usage_group_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    usage_group_name = models.CharField(max_length=100, null=True, blank=True)
+    is_building = models.BooleanField(null=True, blank=True)
+    voltage_str = models.CharField(max_length=20, null=True, blank=True)
+    identity_number = models.CharField(max_length=50, null=True, blank=True)
+    zone_id = models.CharField(max_length=50, null=True, blank=True)
+    customer_zone_id = models.CharField(max_length=50, null=True, blank=True)
+    customer_zone_name = models.CharField(max_length=255, null=True, blank=True)
+
     def __str__(self):
         return f'{self.tool_name} ({self.meter_id})'
 
@@ -142,6 +161,25 @@ class SmartMeterReading(models.Model):
     current_phase_b = models.FloatField(null=True, blank=True)
     current_phase_c = models.FloatField(null=True, blank=True)
     current_phase_n = models.FloatField(null=True, blank=True)
+
+    phase_a_angle = models.FloatField(null=True, blank=True)
+    phase_b_angle = models.FloatField(null=True, blank=True)
+    phase_c_angle = models.FloatField(null=True, blank=True)
+    phase_n_angle = models.FloatField(null=True, blank=True)
+
+    voltage_l1 = models.FloatField(null=True, blank=True)
+    voltage_l2 = models.FloatField(null=True, blank=True)
+    voltage_l3 = models.FloatField(null=True, blank=True)
+    current_l1 = models.FloatField(null=True, blank=True)
+    current_l2 = models.FloatField(null=True, blank=True)
+    current_l3 = models.FloatField(null=True, blank=True)
+
+    guid = models.CharField(max_length=64, null=True, blank=True)
+    source_id = models.CharField(max_length=50, null=True, blank=True)
+    source_name = models.CharField(max_length=50, null=True, blank=True)
+    profile_status_energy = models.IntegerField(null=True, blank=True)
+    profile_status_power = models.IntegerField(null=True, blank=True)
+    dl_insert_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['tool', 'reading_time']

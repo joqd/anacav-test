@@ -9,7 +9,7 @@ from apps.customers.models import Customer
 
 # Khordad + Tir 1405. end_date_jalali is stored as 'YYYY/MM/DD' (zero-padded),
 # so plain string comparison is equivalent to date comparison.
-JALALI_START = '1405/03/01'          # inclusive: first day of Khordad
+JALALI_START = '1405/03/01'  # inclusive: first day of Khordad
 JALALI_END_EXCLUSIVE = '1405/05/01'  # exclusive: first day of Mordad
 
 NO_VALUE_LABEL = 'No value / NULL'
@@ -117,7 +117,7 @@ class Command(BaseCommand):
             ),
             show_customers,
             sql=self._sql_bill_level(
-                "CASE WHEN b.change_reason_id IS NOT NULL "
+                'CASE WHEN b.change_reason_id IS NOT NULL '
                 "THEN CONCAT(b.change_reason_id, ' - ', b.change_reason_name) "
                 f"ELSE '{NO_VALUE_LABEL}' END"
             ),
@@ -139,10 +139,7 @@ class Command(BaseCommand):
         return Customer._meta.db_table
 
     def _base_where(self, alias='b'):
-        return (
-            f"{alias}.end_date_jalali >= '{JALALI_START}' "
-            f"AND {alias}.end_date_jalali < '{JALALI_END_EXCLUSIVE}'"
-        )
+        return f"{alias}.end_date_jalali >= '{JALALI_START}' AND {alias}.end_date_jalali < '{JALALI_END_EXCLUSIVE}'"
 
     def _sql_customer_list(self):
         return (

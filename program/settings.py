@@ -154,8 +154,6 @@ UNFOLD = {
     'SITE_TITLE': 'Anacav Admin',
     'SITE_HEADER': 'Anacav',
     'SITE_SYMBOL': 'bolt',
-    'SHOW_HISTORY': True,
-    'SHOW_VIEW_ON_SITE': True,
     'SIDEBAR': {
         'show_search': True,
         'show_all_applications': False,
@@ -202,7 +200,7 @@ UNFOLD = {
                 'icon': 'electric_meter',
                 'items': [
                     {
-                        'title': 'Metering Stations',
+                        'title': 'Stations',
                         'icon': 'domain',
                         'link': reverse_lazy('admin:metering_meteringstation_changelist'),
                     },
@@ -212,12 +210,12 @@ UNFOLD = {
                         'link': reverse_lazy('admin:metering_measurementtool_changelist'),
                     },
                     {
-                        'title': 'Feeder Links',
+                        'title': 'Feeder Customer Links',
                         'icon': 'account_tree',
                         'link': reverse_lazy('admin:metering_feedercustomerlink_changelist'),
                     },
                     {
-                        'title': 'Power Daily Stats',
+                        'title': 'Daily Power Stats',
                         'icon': 'monitoring',
                         'link': reverse_lazy('admin:metering_toolpowerdailystat_changelist'),
                     },
