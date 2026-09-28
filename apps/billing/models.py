@@ -7,10 +7,10 @@ class Bill(models.Model):
     bill_id = models.BigIntegerField(primary_key=True)
     customer = models.ForeignKey(
         Customer,
-        to_field="bill_identity",
-        db_column="bill_identity",
+        to_field='bill_identity',
+        db_column='bill_identity',
         on_delete=models.CASCADE,
-        related_name="bills",
+        related_name='bills',
     )
 
     subscriber_type = models.CharField(max_length=10, null=True, blank=True, db_index=True)
@@ -55,12 +55,12 @@ class Bill(models.Model):
     last_update_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "bill"
-        verbose_name_plural = "bills"
-        ordering = ["customer", "start_date_jalali"]
+        verbose_name = 'bill'
+        verbose_name_plural = 'bills'
+        ordering = ['customer', 'start_date_jalali']
 
     def __str__(self):
-        return f"Bill#{self.bill_id} ({self.customer_id})"
+        return f'Bill#{self.bill_id} ({self.customer_id})'
 
     @property
     def total_kwh(self) -> float:
@@ -72,30 +72,30 @@ class Bill(models.Model):
 
 
 class BillObservation(models.Model):
-    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name="observations")
+    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name='observations')
     customer = models.ForeignKey(
         Customer,
-        to_field="bill_identity",
-        db_column="bill_identity",
+        to_field='bill_identity',
+        db_column='bill_identity',
         on_delete=models.CASCADE,
-        related_name="bill_observations",
+        related_name='bill_observations',
     )
     observe_id = models.PositiveSmallIntegerField()
     observe_name = models.CharField(max_length=255)
     observe_date_jalali = models.CharField(max_length=10)
 
     class Meta:
-        verbose_name = "bill observation"
-        verbose_name_plural = "bill observations"
+        verbose_name = 'bill observation'
+        verbose_name_plural = 'bill observations'
 
 
 class MonthlyConsumptionEstimate(models.Model):
     customer = models.ForeignKey(
         Customer,
-        to_field="bill_identity",
-        db_column="bill_identity",
+        to_field='bill_identity',
+        db_column='bill_identity',
         on_delete=models.CASCADE,
-        related_name="monthly_estimates",
+        related_name='monthly_estimates',
     )
     period_jalali = models.CharField(max_length=7)
     days = models.PositiveSmallIntegerField()
@@ -108,11 +108,7 @@ class MonthlyConsumptionEstimate(models.Model):
     friday_high_kwh = models.FloatField(default=0)
 
     class Meta:
-        verbose_name = "monthly consumption estimate"
-        verbose_name_plural = "monthly consumption estimates"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["customer", "period_jalali"], name="uniq_customer_period"
-            )
-        ]
-        ordering = ["customer", "period_jalali"]
+        verbose_name = 'monthly consumption estimate'
+        verbose_name_plural = 'monthly consumption estimates'
+        constraints = [models.UniqueConstraint(fields=['customer', 'period_jalali'], name='uniq_customer_period')]
+        ordering = ['customer', 'period_jalali']

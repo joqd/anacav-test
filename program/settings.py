@@ -28,12 +28,12 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 DATA_IMPORT_FILES = {
-    "customers": BASE_DIR / "assets" / "chunk_customers.csv",
-    "bills":     BASE_DIR / "assets" / "chunk_bills.csv",
-    "observes":  BASE_DIR / "assets" / "chunk_observes.csv",
-    "changes":   BASE_DIR / "assets" / "chunk_changes.csv",
-    "monthly":   BASE_DIR / "assets" / "chunk_monthly.csv",
-	"feeder_customers": BASE_DIR / "assets" / "subscribers.csv",
+    'customers': BASE_DIR / 'assets' / 'chunk_customers.csv',
+    'bills': BASE_DIR / 'assets' / 'chunk_bills.csv',
+    'observes': BASE_DIR / 'assets' / 'chunk_observes.csv',
+    'changes': BASE_DIR / 'assets' / 'chunk_changes.csv',
+    'monthly': BASE_DIR / 'assets' / 'chunk_monthly.csv',
+    'feeder_customers': BASE_DIR / 'assets' / 'subscribers.csv',
 }
 
 # Application definition
@@ -45,11 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-	'apps.customers',
-	'apps.billing',
-	'apps.metering',
-	'apps.cli',
+    'apps.customers',
+    'apps.billing',
+    'apps.metering',
+    'apps.cli',
 ]
 
 MIDDLEWARE = [

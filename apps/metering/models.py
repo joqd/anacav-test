@@ -20,17 +20,15 @@ class MeasurementTool(models.Model):
     tool_name = models.CharField(max_length=100, blank=True)
     tool_type_id = models.PositiveSmallIntegerField(null=True, blank=True)
 
-    station = models.ForeignKey(
-        MeteringStation, on_delete=models.SET_NULL, null=True, blank=True, related_name="tools"
-    )
+    station = models.ForeignKey(MeteringStation, on_delete=models.SET_NULL, null=True, blank=True, related_name='tools')
     customer = models.ForeignKey(
         Customer,
-        to_field="bill_identity",
-        db_column="bill_identity",
+        to_field='bill_identity',
+        db_column='bill_identity',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="measurement_tools",
+        related_name='measurement_tools',
     )
 
     active_status = models.BooleanField(default=True)
@@ -51,7 +49,7 @@ class MeasurementTool(models.Model):
     usage_type_id = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.tool_name} ({self.meter_id})"
+        return f'{self.tool_name} ({self.meter_id})'
 
     @property
     def multiplier(self) -> int:
@@ -61,14 +59,12 @@ class MeasurementTool(models.Model):
 class FeederCustomerLink(models.Model):
     customer = models.ForeignKey(
         Customer,
-        to_field="bill_identity",
-        db_column="bill_identity",
+        to_field='bill_identity',
+        db_column='bill_identity',
         on_delete=models.CASCADE,
-        related_name="feeder_links",
+        related_name='feeder_links',
     )
-    tool = models.ForeignKey(
-        MeasurementTool, on_delete=models.CASCADE, related_name="connected_customers"
-    )
+    tool = models.ForeignKey(MeasurementTool, on_delete=models.CASCADE, related_name='connected_customers')
     legacy_customer_id = models.BigIntegerField(db_index=True)
 
     last_update = models.DateTimeField()
@@ -76,14 +72,12 @@ class FeederCustomerLink(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     class Meta:
-        indexes = [models.Index(fields=["tool", "is_deleted"])]
-        constraints = [
-            models.UniqueConstraint(fields=["customer", "tool"], name="uniq_customer_tool_link")
-        ]
+        indexes = [models.Index(fields=['tool', 'is_deleted'])]
+        constraints = [models.UniqueConstraint(fields=['customer', 'tool'], name='uniq_customer_tool_link')]
 
 
 class ToolPowerDailyStat(models.Model):
-    tool = models.ForeignKey(MeasurementTool, on_delete=models.CASCADE, related_name="power_stats")
+    tool = models.ForeignKey(MeasurementTool, on_delete=models.CASCADE, related_name='power_stats')
     sample_date = models.DateField()
 
     sample_count = models.PositiveIntegerField()
@@ -97,15 +91,11 @@ class ToolPowerDailyStat(models.Model):
     formula_type_count = models.PositiveIntegerField()
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["tool", "sample_date"], name="uniq_tool_power_day")
-        ]
+        constraints = [models.UniqueConstraint(fields=['tool', 'sample_date'], name='uniq_tool_power_day')]
 
 
 class MeterQuarterlyEnergy(models.Model):
-    tool = models.ForeignKey(
-        MeasurementTool, on_delete=models.CASCADE, related_name="quarterly_energy"
-    )
+    tool = models.ForeignKey(MeasurementTool, on_delete=models.CASCADE, related_name='quarterly_energy')
     sample_date = models.DateField()
 
     sample_count = models.PositiveIntegerField()
@@ -123,13 +113,11 @@ class MeterQuarterlyEnergy(models.Model):
     status_nonnull_count = models.PositiveIntegerField()
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["tool", "sample_date"], name="uniq_tool_quarter_day")
-        ]
+        constraints = [models.UniqueConstraint(fields=['tool', 'sample_date'], name='uniq_tool_quarter_day')]
 
 
 class SmartMeterReading(models.Model):
-    tool = models.ForeignKey(MeasurementTool, on_delete=models.CASCADE, related_name="readings")
+    tool = models.ForeignKey(MeasurementTool, on_delete=models.CASCADE, related_name='readings')
     time_tag = models.BigIntegerField(db_index=True)
     reading_time = models.DateTimeField(db_index=True)
     shamsi_date = models.CharField(max_length=19, null=True, blank=True)
@@ -156,8 +144,6 @@ class SmartMeterReading(models.Model):
     current_phase_n = models.FloatField(null=True, blank=True)
 
     class Meta:
-        ordering = ["tool", "reading_time"]
-        indexes = [models.Index(fields=["tool", "reading_time"])]
-        constraints = [
-            models.UniqueConstraint(fields=["tool", "time_tag"], name="uniq_tool_time_tag")
-        ]
+        ordering = ['tool', 'reading_time']
+        indexes = [models.Index(fields=['tool', 'reading_time'])]
+        constraints = [models.UniqueConstraint(fields=['tool', 'time_tag'], name='uniq_tool_time_tag')]

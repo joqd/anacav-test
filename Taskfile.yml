@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+tasks:
+  format:
+    desc: Format using ruff
+    cmds:
+      - uv run ruff format .
+    silent: true
+
+  fix:
+    desc: Fix lint issues using ruff
+    cmds:
+      - uv run ruff check . --fix
+      - uv run ruff format .
+    silent: true
+
+  lint:
+    desc: Lint using ruff
+    cmds:
+      - uv run ruff check .
+    silent: true
+
+  export-deps:
+    desc: Export dependencies in requirements-txt
+    cmds:
+      - uv export --format requirements-txt --no-hashes -o requirements.txt
+    silent: true
